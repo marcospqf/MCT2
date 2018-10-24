@@ -48,12 +48,12 @@ public:
   static void SetShutDown(int signum);
   // build graph;
   MCTS(int n, vector<vector<int>> graph_);
-  State *Expand(State *&u);
-  pair<State *, double> Build(State *&tree_vertex);
+  State *Expand(State *u);
+  pair<State *, double> Build(State *tree_vertex);
   set<int> Simulation(State *tree_vertex);
   set<int> Process();
-  vector<State *> GenChildren(State *&tree_vertex);
-  void EraseBranch(State *&tree_vertex);
+  vector<State *> GenChildren(State *tree_vertex);
+  void EraseBranch(State *tree_vertex);
 };
 
 #endif
