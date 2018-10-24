@@ -15,6 +15,7 @@ public:
   set<int> MaxCliqueMinDegreeHeuristic(set<int> candidates, set<int> clique);
   set<int> MaxCliqueMaxDegreeHeuristic(set<int> candidates, set<int> clique);
   set<int> MaxCliqueRandomHeuristic(set<int> candidates, set<int> clique);
+  set<int> Solver(set<int> candidates, set<int> clique);
 };
 
 class State {

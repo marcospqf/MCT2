@@ -109,9 +109,98 @@ set<int> Graph::MaxCliqueRandomHeuristic(set<int> candidates, set<int> clique) {
   return clique;
 }
 
+set<int> Graph::Solver(set<int> candidates, set<int> clique) {
+  map<int, int> map_to_idx;
+  map<int, int> trad;
+  int n = 0;
+  for (int u : candidates) {
+    trad[n] = u;
+    map_to_idx[u] = n++;
+  }
+  vector<long long> g(n, 0);
+  vector<long long> dp((1ll << (n / 2 + 2)), 0);
+  vector<long long> dp2((1ll << (n / 2 + 2)), 0);
+  for (int u : candidates)
+    for (int v : graph[u])
+      if (candidates.count(v))
+        g[map_to_idx[u]] |= (1ll << map_to_idx[v]);
+  long long t1 = n / 2;
+  long long t2 = n - t1;
+  long long r = 0;
+  long long maximum_clique = 0;
+  for (long long mask = 1; mask < (1ll << t1); mask++) {
+    for (long long j = 0; j < t1; j++)
+      if (mask & (1ll << j)) {
+        long long outra = mask - (1ll << j);
+        long long r1 = __builtin_popcountll(dp[mask]);
+        long long r2 = __builtin_popcountll(dp[outra]);
+        if (r2 > r1)
+          dp[mask] = dp[outra];
+      }
+    bool click = true;
+    for (long long j = 0; j < t1; j++)
+      if ((1ll << j) & mask)
+        if (((g[j] ^ mask) & mask))
+          click = false;
+    if (click)
+      dp[mask] = mask;
+    long long r1 = __builtin_popcountll(dp[mask]);
+    if (r1 > r)
+      r = r1, maximum_clique = dp[mask];
+  }
+
+  for (long long mask = 1; mask < (1ll << t2); mask++) {
+    for (long long j = 0; j < t2; j++)
+      if (mask & (1ll << j)) {
+        long long outra = mask - (1ll << j);
+        long long r1 = __builtin_popcountll(dp2[mask]);
+        long long r2 = __builtin_popcountll(dp2[outra]);
+        if (r2 > r1)
+          dp2[mask] = dp2[outra];
+      }
+    bool click = true;
+    for (long long j = 0; j < t2; j++) {
+      if ((1ll << j) & mask) {
+        long long m1 = g[j + t1];
+        long long cara = mask << t1;
+        if ((m1 ^ cara) & cara) {
+          click = false;
+        }
+      }
+    }
+    if (click) {
+      dp2[mask] = mask;
+    }
+    long long r1 = __builtin_popcountll(dp2[mask]);
+    if (r1 > r)
+      r = r1, maximum_clique = dp2[mask];
+  }
+
+  for (long long mask = 0; mask < (1ll << t1); mask++) {
+    long long tudo = (1ll << n) - 1;
+    for (long long j = 0; j < t1; j++)
+      if ((1ll << j) & mask)
+        tudo &= g[j];
+
+    tudo >>= t1;
+    long long x = __builtin_popcountll(dp[mask]);
+    long long y = __builtin_popcountll(dp2[tudo]);
+    if (x + y > r) {
+      r = x + y, maximum_clique = dp[mask] + (dp2[tudo] << t1);
+    }
+    r = max(r, x + y);
+  }
+  set<int> maxi_clique;
+  for (int i = 0; i < n; i++)
+    if ((1ll << i) & maximum_clique)
+      maxi_clique.insert(trad[i]);
+  return maxi_clique;
+}
+
 int Graph::UpperBoundClique(set<int> &clique, set<int> &candidates) {
   return clique.size() + candidates.size();
 }
+
 /*-----------------------*/
 State::State(set<int> clique_, vector<State *> son_, set<int> candidates_,
              int nvisited_, double sum_reward_, bool is_terminal_,
@@ -250,6 +339,15 @@ pair<State *, double> MCTS::Build(State *&tree_vertex) {
     }
     return {tree_vertex, tree_vertex->sum_reward};
   }
+  if (tree_vertex->candidates.size() <= 40) {
+    set<int> clique =
+        graph->Solver(tree_vertex->candidates, tree_vertex->clique);
+    if (maximum_clique.size() < clique.size())
+      maximum_clique = clique;
+    EraseBranch(tree_vertex);
+    return {nullptr, -1};
+  }
+
   int idx = tree_vertex->GetBestChild();
   if (idx == -1) {
     tree_vertex->son.clear();
