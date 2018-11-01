@@ -1,0 +1,6 @@
+comparar 3 benchmarks
+
+1- Heuristica do loic - Excolher no nivel o nó de menor grau do subgrafo.
+2- Heuristica do loic - Excolher no nivel o nó de maior grau do subgrafo.
+4- Fazer aleatorio para todo os nós da árvore.
+3- testar robustez da heuristica corrente.
